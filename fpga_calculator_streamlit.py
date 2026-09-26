@@ -5,7 +5,7 @@ import math
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Literal
-from binary_support import precision_profile, lookup_table, twos_complement, binary_string_to_int_list, int_list_to_binary_string, binary_point_removal, twos_complement_bin_rational
+from binary_support import precision_profile, lookup_table, twos_complement, binary_string_to_int_list, int_list_to_binary_string, binary_point_removal, twos_complement_bin_rational, list_to_string, remove_msbs, binary_point_alignment
 from binary_conversions import real_to_twos_comp_binary, hexadecimal_to_binary, ieee754_hex_to_binary, binary_to_real, binary_to_hexadecimal, binary_to_ieee754
 from binary_math import binary_division, binary_multiplier, binary_adder, binary_subtraction
 
@@ -17,6 +17,14 @@ st.write("This calculator can perform data type conversions and it can perform b
 # Initialize display tracking variables
 if "display" not in st.session_state:
     st.session_state.display = ""
+
+# Initialize display tracking variables
+if "display" not in st.session_state:
+    st.session_state.display = ""
+    
+# THE FIX: Track widget versions to force-clear text fields
+if "input_widget_counter" not in st.session_state:
+    st.session_state.input_widget_counter = 0
 
 # 2. Complete Visual Layout Overhaul
 if False:
@@ -105,39 +113,45 @@ MODES = [
 # We use st.text_input to act as display entries
 # 3. Displays
 # Track whether the user presses Enter on their physical keyboard inside the text field
+# --- Complete Layout & Color Isolation Styling ---
 st.markdown(
     """
     <style>
-    .stApp {
-        background-color: #fef3c7;
+    /* 1. FORCE THE FULL OUTER PAGE BACKGROUND (Warm Cream/Yellow) */
+    [data-testid="stAppViewContainer"] {
+        background-color: #fef3c7 !important;
     }
 
-    /* Target the bordered container to turn its background Light Blue */
-    [data-testid="stVerticalBlockBorderWrapper"] {
+    /* 2. STYLE THE MAIN APP CONTAINER AS A CENTERED CARD (Light Blue) */
+    [data-testid="stMainBlockContainer"] {
         background-color: #e0f2fe !important;
-        border: 2px solid #bae6fd !important; /* Optional: adjust the border color */
-        padding: 25px !important;
-        border-radius: 12px !important;
-    }
-    
-    /* Reduce padding inside the container border */
-    [data-testid="stVComponentBlock"] div[class*="st-emotion-cache"] {
-        background-color: #e0f2fe;
-        padding-top: 0.2rem !important;
-        padding-bottom: 0.2rem !important;
+        border: 2px solid #bae6fd !important;
+        padding: 40px !important;
+        border-radius: 16px !important;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.05);
+        max-width: 550px !important;
+        margin: 40px auto !important;
     }
 
-    /* Minimize height and padding of the st.code block */
+    /* Clean up internal component spacing and match container background */
+    [data-testid="stVerticalBlock"], 
+    [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stVComponentBlock"] div {
+        background-color: #e0f2fe !important;
+        gap: 0.6rem !important;
+    }
+
+    /* 3. TIGHTEN THE OUTPUT WINDOW (st.code text box) */
     .stCodeBlock, .stCodeBlock pre {
         margin-bottom: 0px !important;
-        padding-top: 1px !important;
-        padding-bottom: 1px !important;
+        padding: 4px 10px !important;
+        background-color: #ffffff !important;
+        border-radius: 6px !important;
     }
     
-    /* Make the inner code block text tighter */
     .stCodeBlock code {
-        padding: 2px !important;
-        line-height: 0.2 !important;
+        font-family: monospace !important;
+        font-size: 1.1rem !important;
     }
     </style>
     """,
@@ -155,7 +169,7 @@ with st.container(border=True):
         typed_input = st.text_input(
             "xxx", 
             value=st.session_state.main_display_var, 
-            key="input_win",
+            key=f"input_win_{st.session_state.input_widget_counter}",
             label_visibility="collapsed"
         )
 
@@ -164,17 +178,12 @@ with st.container(border=True):
     with label_col2:
         st.write("Output ")
 
-    #output_placeholder = st.empty()
-
     with widget_col2:
-    #	with output_placeholder.container(border=True, height = 50):
-        #    st.markdown("**Output Window**")
         st.code(st.session_state.aux_display_var, language="text")		
 
     # ---------------------------------------------------------
     # 2. Configuration Panel (Bit Widths)
     # ---------------------------------------------------------
-    #st.markdown("### Configuration Panel")
     col1, col2 = st.columns(2)
     with col1:
         int_bits = int(st.text_input("Integer Bits:", value=16))
@@ -184,54 +193,40 @@ with st.container(border=True):
     # ---------------------------------------------------------
     # 3. Format Selectors
     # ---------------------------------------------------------
-    # 5. Format Selectors
-    #st.markdown("### Formats")
     f_col1, f_col2 = st.columns(2)
 
     with f_col1:
         st.caption("Input Format")
-        # RESTORED: Passes the pure tuple block. Streamlit will now return the full tuple.
         input_mode = st.radio(
             "In Mode", 
             options=MODES, 
-            format_func=lambda x: x[0],  # Tells Streamlit to read the readable name ("Hex") on screen
+            format_func=lambda x: x[0],  
             label_visibility="collapsed"
         )
 
     with f_col2:
         st.caption("Output Format")
-        # RESTORED: Passes the pure tuple block. Streamlit will now return the full tuple.
         output_mode = st.radio(
             "Out Mode", 
             options=MODES, 
-            format_func=lambda x: x[0],  # Tells Streamlit to read the readable name ("Hex") on screen
+            format_func=lambda x: x[0],  
             label_visibility="collapsed"
         )
 
     # ---------------------------------------------------------
     # 4. Calculator Buttons Layout & Event Handling
     # ---------------------------------------------------------
-        # 4. Calculator Keypad Grid
-    # 4. The 4-Column Keypad Matrix
-    #st.markdown("### Keypad")
-
     buttons = [
-        ('7', '8', '9', '/'),
-        ('4', '5', '6', '*'),
-        ('1', '2', '3', '-'),
-        ('0', '.', 'R', '+'),
-        ('A', 'B', 'C', 'D'),
-        ('E', 'F', 'Enter', '=')
+        ('Reset', 'Enter')
     ]
 
     button_pressed = None
 
     # Build rows horizontally inside the centered container tracking layout
     for row in buttons:
-        cols = st.columns(4) # Enforces 4 exact equal columns across the container width
+        cols = st.columns(2) 
         for i, val in enumerate(row):
             with cols[i]:
-                # Each key receives a predictable dynamic mapping tag name
                 if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
                     button_pressed = val
 
@@ -305,26 +300,26 @@ def convert_to_binary(operand):
 
     return n_int_list
 
-def binary_math_operation(self, operand1, operand2, operator):
+def binary_math_operation(operand1, operand2, operator):
 	if (operator == "/"):
-		if (self.output_mode.get() == "FP32"):
-			self.current_profile = precision_profile["SINGLE"]
-			p = self.current_profile
+		if (output_mode[1] == "FP32"):
+			current_profile = precision_profile["SINGLE"]
+			p = current_profile
 
-			if (1 + p.exponent_size + p.mantissa_size) < (self.int_bits.get() + self.frac_bits.get()):
-				max_size = self.int_bits.get() + self.frac_bits.get()
+			if (1 + p.exponent_size + p.mantissa_size) < (int_bits + frac_bits):
+				max_size = int_bits + frac_bits
 			else:
 				max_size = 64
-		elif (self.output_mode.get() == "FP64"):
-			self.current_profile = precision_profile["DOUBLE"]
-			p = self.current_profile
+		elif (output_mode[1] == "FP64"):
+			current_profile = precision_profile["DOUBLE"]
+			p = current_profile
 
-			if (1 + p.exponent_size + p.mantissa_size) < (self.int_bits.get() + self.frac_bits.get()):
-				max_size = self.int_bits.get() + self.frac_bits.get()
+			if (1 + p.exponent_size + p.mantissa_size) < (int_bits + frac_bits):
+				max_size = int_bits + frac_bits
 			else:
 				max_size = 128
 		else:
-			max_size = self.int_bits.get() + self.frac_bits.get()
+			max_size = int_bits + frac_bits
 
 		operand1_no_bin_point, operand2_no_bin_point, operand1_fraction_size, operand2_fraction_size = binary_point_alignment(operand1, operand2, False)
 
@@ -526,18 +521,29 @@ def get_operands():
 # Process Button Actions
 button_push_result = None
 
+if typed_input != st.session_state.main_display_var:
+    st.session_state.main_display_var = typed_input
+    keyboard_enter_pressed = True
+
+# Explicitly link your button press assignment here
+button_push_result = button_pressed 
+
 if button_push_result or keyboard_enter_pressed:
  
-    # Force the trigger state if the user hit keyboard Enter
     if keyboard_enter_pressed and not button_push_result:
         button_push_result = 'Enter'
 
-    if button_push_result == 'R':
+    # The 'R' routing logic now triggers cleanly because button_push_result is captured
+    # The 'Reset' routing logic triggers cleanly without causing a framework crash
+    if button_push_result == 'Reset':
         st.session_state.main_display_var = ""
         st.session_state.aux_display_var = ""
+        
+        # THE FIX: Bump the counter to force Streamlit to wipe the text field clean
+        st.session_state.input_widget_counter += 1
         st.rerun()
         
-    elif button_push_result in ('=', 'Enter'):
+    elif button_push_result in ('Enter'):
         # Parse inputs
         operand1, operand2, operator = get_operands()
         
@@ -576,7 +582,7 @@ if button_push_result or keyboard_enter_pressed:
                 operand2_data_error = verify_bin_input(operand2)
                 
         elif input_mode[1] == "FP32":
-            exponent_size, mantissa_size = 7, 23
+            exponent_size, mantissa_size = 8, 23
             operand1_data_error = verify_fp32_input(operand1)
             if operand2_present:
                 operand2_data_error = verify_fp32_input(operand2)
@@ -595,7 +601,6 @@ if button_push_result or keyboard_enter_pressed:
             
             if operand2_present:
                 operand2_binary = convert_to_binary(operand2)
-                
                 binary_result = binary_math_operation(operand1_binary, operand2_binary, operator)
                 calculator_result = convert_from_binary(binary_result)
             else:
@@ -605,6 +610,8 @@ if button_push_result or keyboard_enter_pressed:
             st.rerun()
         else:
             st.session_state.main_display_var = ""
+            if "input_win" in st.session_state:
+                st.session_state.input_win = ""
             st.session_state.aux_display_var = "ERROR"
             st.rerun()
     else:
