@@ -216,47 +216,57 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if (show_numpad):
-		st.markdown(
-			"""
-			<style>
-			/* Target the responsive grid row layout and force it horizontal */
-			div[data-testid="stHorizontalBlock"] {
-				display: flex !important;
-				flex-direction: row !important;
-				flex-wrap: nowrap !important;
-				width: 100% !important;
-			}
+		with st.container(key="numpad_container"):
 
-			/* Force individual button columns to shrink cleanly side-by-side */
-			div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-				width: 33.33% !important;
-				min-width: 0 !important;
-				flex-basis: 33.33% !important;
-			}
-			</style>
-			""",
-			unsafe_allow_html=True
-		)
+			# --- SCOPED MOBILE GRID CSS ---
+			st.markdown(
+				"""
+				<style>
+				/* 1. Restrict the total keypad width so it doesn't look stretched on PC */
+				div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-element-cursor="numpad_container"]) {
+					max-width: 320px !important;
+					margin: 0 auto !important; /* Centers it perfectly */
+				}
+
+				/* 2. Target only the rows INSIDE our keypad container and force them horizontal */
+				div[data-element-cursor="numpad_container"] div[data-testid="stHorizontalBlock"] {
+					display: flex !important;
+					flex-direction: row !important;
+					flex-wrap: nowrap !important;
+					gap: 8px !important; /* Tightens space between buttons */
+					margin-bottom: 8px !important; /* Spacing between rows */
+				}
+
+				/* 3. Equal, locked sizing for every button column inside the container */
+				div[data-element-cursor="numpad_container"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+					width: 33.33% !important;
+					min-width: 0 !important;
+					flex-basis: 33.33% !important;
+				}
+				</style>
+				""",
+				unsafe_allow_html=True
+			)
 		
-		buttons = [
-			('7', '8', '9', '/'),
-			('4', '5', '6', '*'),
-			('1', '2', '3', '-'),
-			('0', '.', 'R', '+'),
-			('A', 'B', 'C', 'D'),
-			('E', 'F', 'Enter', '=')
-		]
+			buttons = [
+				('7', '8', '9', '/'),
+				('4', '5', '6', '*'),
+				('1', '2', '3', '-'),
+				('0', '.', 'R', '+'),
+				('A', 'B', 'C', 'D'),
+				('E', 'F', 'Enter', '=')
+			]
 
-		button_pressed = None
+			button_pressed = None
 
-		# Build rows horizontally inside the centered container tracking layout
-		for row in buttons:
-			cols = st.columns(4) # Enforces 4 exact equal columns across the container width
-			for i, val in enumerate(row):
-				with cols[i]:
-					# Each key receives a predictable dynamic mapping tag name
-					if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
-						button_pressed = val
+			# Build rows horizontally inside the centered container tracking layout
+			for row in buttons:
+				cols = st.columns(4) # Enforces 4 exact equal columns across the container width
+				for i, val in enumerate(row):
+					with cols[i]:
+						# Each key receives a predictable dynamic mapping tag name
+						if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
+							button_pressed = val
 	else:
 		buttons = [
 			('Reset', 'Enter')
