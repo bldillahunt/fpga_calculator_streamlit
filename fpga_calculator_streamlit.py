@@ -18,59 +18,9 @@ st.write("This calculator can perform data type conversions and it can perform b
 if "display" not in st.session_state:
 	st.session_state.display = ""
 
-# Initialize display tracking variables
-if "display" not in st.session_state:
-	st.session_state.display = ""
-	
 # THE FIX: Track widget versions to force-clear text fields
 if "input_widget_counter" not in st.session_state:
 	st.session_state.input_widget_counter = 0
-
-# 2. Complete Visual Layout Overhaul
-if False:
-	st.html("""
-		<style>
-		/* Hides default Streamlit framework indicators */
-		.stAppDeployButton { display: none; } 
-		#MainMenu { visibility: hidden; }
-		footer { visibility: hidden; }
-
-		/* THE FIX: Hard-centers the block layout container on the viewport */
-		div[data-testid="stMainBlockContainer"] {
-			max-width: 480px !important;
-			margin: 0 auto !important;
-			padding: 24px !important;
-			border: 1px solid #e0e0e0;
-			border-radius: 16px;
-			box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
-			background-color: #ffffff;
-		}
-
-		/* THE FIX: Turns standard layout buttons into uniform calculator keycaps */
-		div[data-testid="stColumn"] button {
-			height: 30px !important;
-			width: 50% !important;
-			font-family: 'Courier New', Courier, monospace !important;
-			font-size: 12px !important;
-			font-weight: bold !important;
-			border-radius: 6px !important;
-			transition: transform 0.1s ease;
-		}
-
-		/* Subtle button hover action */
-		div[data-testid="stColumn"] button:active {
-			transform: scale(0.95);
-		}
-
-		/* THE FIX: Specifically intercepts the 'Enter' key widget to shrink text font size */
-		button[key*="btn_Enter"] p, 
-		div[data-testid="stColumn"] button:has(div:contains("Enter")) p,
-		button:has(span:contains("Enter")) {
-			font-size: 12px !important;
-			letter-spacing: -0.5px;
-		}
-		</style>
-	""")
 
 st.markdown(
 	"""
@@ -85,7 +35,6 @@ st.markdown(
 )
 
 # --- Initialize Session State for Variables ---
-# This mimics Tkinter's instance variables (xxx) across app reruns
 if "main_display_var" not in st.session_state:
 	st.session_state.main_display_var = ""
 if "aux_display_var" not in st.session_state:
@@ -103,16 +52,6 @@ MODES = [
 	("IEEE-754 Double", "FP64")
 ]
 
-# ---------------------------------------------------------
-# Placeholder Dummy Methods for Logic (Replace with yours)
-# ---------------------------------------------------------
-
-# ---------------------------------------------------------
-# 1. Main & Secondary Displays
-# ---------------------------------------------------------
-# We use st.text_input to act as display entries
-# 3. Displays
-# Track whether the user presses Enter on their physical keyboard inside the text field
 # --- Complete Layout & Color Isolation Styling ---
 st.markdown(
 	"""
@@ -153,10 +92,29 @@ st.markdown(
 		font-family: monospace !important;
 		font-size: 1.1rem !important;
 	}
+
+	/* --- NUMPAD RIGID LAYOUT OVERRIDES --- */
+	.numpad-wrapper {
+		max-width: 280px;
+		margin: 0 auto; /* Centers the matrix block on desktop and mobile layout */
+		text-align: center;
+	}
+	.numpad-table {
+		width: 100%;
+		border-collapse: separate;
+		border-spacing: 5px; /* Adjusts gap space symmetrically between keys */
+	}
+	/* Ensures Streamlit internal button targets scale inside table grid fields */
+	.numpad-table div.stButton > button {
+		width: 100% !important;
+		padding: 8px 0 !important;
+	}
 	</style>
 	""",
 	unsafe_allow_html=True
 )
+
+button_pressed = None
 
 # Detect if the value inside the input window changed (user typed/pasted and hit Enter)
 with st.container(border=True):
@@ -215,40 +173,11 @@ with st.container(border=True):
 
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
-	if (show_numpad):
-		st.markdown(
-			"""
-			<style>
-			/* Limit the total width of the keypad so it doesn't stretch wildly */
-			.numpad-box {
-				max-width: 280px;
-				margin: 0 auto; /* Centers it on PC and mobile */
-			}
-
-			/* Force the inner Streamlit rows to stay horizontal on phones */
-			.numpad-box div[data-testid="stHorizontalBlock"] {
-				display: flex !important;
-				flex-direction: row !important;
-				flex-wrap: nowrap !important;
-				gap: 6px !important;
-				margin-bottom: 6px !important;
-			}
-
-			/* Force individual button columns to stay exactly 1/3 width */
-			.numpad-box div[data-testid="column"] {
-				width: 33.33% !important;
-				flex: 1 1 33.33% !important;
-				min-width: 0 !important;
-			}
-			</style>
-			""",
-			unsafe_allow_html=True
-		)
-
-		# 2. Open our custom HTML wrapper
-		st.markdown('<div class="numpad-box"><h3>Number Pad</h3>', unsafe_allow_html=True)
+	if show_numpad:
+		# Use standard HTML tables to build the 4-column matrix layout safely
+		st.markdown('<div class="numpad-wrapper"><h3>Number Pad</h3><table class="numpad-table">', unsafe_allow_html=True)
 		
-		buttons = [
+		buttons_matrix = [
 			('7', '8', '9', '/'),
 			('4', '5', '6', '*'),
 			('1', '2', '3', '-'),
@@ -257,30 +186,25 @@ with st.container(border=True):
 			('E', 'F', 'Enter', '=')
 		]
 
-		button_pressed = None
-
-		# Build rows horizontally inside the centered container tracking layout
-		for row in buttons:
-			cols = st.columns(4) # Enforces 4 exact equal columns across the container width
-			for i, val in enumerate(row):
-				with cols[i]:
-					# Each key receives a predictable dynamic mapping tag name
-					if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
-						button_pressed = val
+		for row_idx, row in enumerate(buttons_matrix):
+			st.markdown('<tr>', unsafe_allow_html=True)
+			for col_idx, val in enumerate(row):
+				st.markdown('<td>', unsafe_allow_html=True)
+				if st.button(val, key=f"btn_{val}_{row_idx}_{col_idx}"):
+					button_pressed = val
+				st.markdown('</td>', unsafe_allow_html=True)
+			st.markdown('</tr>', unsafe_allow_html=True)
+			
+		st.markdown('</table></div>', unsafe_allow_html=True)
 	else:
-		buttons = [
-			('Reset', 'Enter')
-		]
-
-		button_pressed = None
-
-		# Build rows horizontally inside the centered container tracking layout
-		for row in buttons:
-			cols = st.columns(2) 
-			for i, val in enumerate(row):
-				with cols[i]:
-					if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
-						button_pressed = val
+		# Balanced 2-column wide control buttons layout
+		st.markdown('<div class="numpad-wrapper"><table class="numpad-table"><tr><td>', unsafe_allow_html=True)
+		if st.button("Reset", key="btn_Reset_default"):
+			button_pressed = "Reset"
+		st.markdown('</td><td>', unsafe_allow_html=True)
+		if st.button("Enter", key="btn_Enter_default"):
+			button_pressed = "Enter"
+		st.markdown('</td></tr></table></div>', unsafe_allow_html=True)
 
 keyboard_enter_pressed = False
 
