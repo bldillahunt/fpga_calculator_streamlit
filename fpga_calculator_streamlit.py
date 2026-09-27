@@ -93,21 +93,26 @@ st.markdown(
 		font-size: 1.1rem !important;
 	}
 
-	/* --- NUMPAD RIGID LAYOUT OVERRIDES --- */
-	.numpad-wrapper {
-		max-width: 280px;
-		margin: 0 auto; /* Centers the matrix block on desktop and mobile layout */
-		text-align: center;
+	/* --- GLOBAL FIXED LAYOUT OVERRIDES (Works on older Streamlit versions) --- */
+	/* Prevent 4-column blocks from collapsing on mobile viewports */
+	div[data-testid="stHorizontalBlock"] {
+		display: flex !important;
+		flex-direction: row !important;
+		flex-wrap: nowrap !important;
+		gap: 6px !important;
 	}
-	.numpad-table {
-		width: 100%;
-		border-collapse: separate;
-		border-spacing: 5px; /* Adjusts gap space symmetrically between keys */
+
+	/* Force standard button elements to size proportionally side-by-side */
+	div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+		width: 25% !important;
+		flex: 1 1 25% !important;
+		min-width: 0 !important;
 	}
-	/* Ensures Streamlit internal button targets scale inside table grid fields */
-	.numpad-table div.stButton > button {
-		width: 100% !important;
-		padding: 8px 0 !important;
+	
+	/* Shrink text sizing and padding slightly to keep keys perfectly compact */
+	div[data-testid="column"] button {
+		padding: 4px 0 !important;
+		font-size: 14px !important;
 	}
 	</style>
 	""",
@@ -174,8 +179,7 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if show_numpad:
-		# Use standard HTML tables to build the 4-column matrix layout safely
-		st.markdown('<div class="numpad-wrapper"><h3>Number Pad</h3><table class="numpad-table">', unsafe_allow_html=True)
+		st.write("### Number Pad")
 		
 		buttons_matrix = [
 			('7', '8', '9', '/'),
@@ -187,24 +191,19 @@ with st.container(border=True):
 		]
 
 		for row_idx, row in enumerate(buttons_matrix):
-			st.markdown('<tr>', unsafe_allow_html=True)
+			cols = st.columns(4)
 			for col_idx, val in enumerate(row):
-				st.markdown('<td>', unsafe_allow_html=True)
-				if st.button(val, key=f"btn_{val}_{row_idx}_{col_idx}"):
-					button_pressed = val
-				st.markdown('</td>', unsafe_allow_html=True)
-			st.markdown('</tr>', unsafe_allow_html=True)
-			
-		st.markdown('</table></div>', unsafe_allow_html=True)
+				with cols[col_idx]:
+					if st.button(val, key=f"btn_{val}_{row_idx}_{col_idx}", use_container_width=True):
+						button_pressed = val
 	else:
-		# Balanced 2-column wide control buttons layout
-		st.markdown('<div class="numpad-wrapper"><table class="numpad-table"><tr><td>', unsafe_allow_html=True)
-		if st.button("Reset", key="btn_Reset_default"):
-			button_pressed = "Reset"
-		st.markdown('</td><td>', unsafe_allow_html=True)
-		if st.button("Enter", key="btn_Enter_default"):
-			button_pressed = "Enter"
-		st.markdown('</td></tr></table></div>', unsafe_allow_html=True)
+		cols = st.columns(2)
+		with cols[0]:
+			if st.button("Reset", key="btn_Reset_default", use_container_width=True):
+				button_pressed = "Reset"
+		with cols[1]:
+			if st.button("Enter", key="btn_Enter_default", use_container_width=True):
+				button_pressed = "Enter"
 
 keyboard_enter_pressed = False
 
