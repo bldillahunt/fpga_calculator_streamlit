@@ -216,24 +216,28 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if (show_numpad):
-	
 		st.markdown(
 			"""
 			<style>
-			/* Force columns within a row to stay side-by-side on mobile devices */
-			[data-testid="stHorizontalBlock"] {
+			/* Target the responsive grid row layout and force it horizontal */
+			div[data-testid="stHorizontalBlock"] {
+				display: flex !important;
 				flex-direction: row !important;
-				gap: 10px;
+				flex-wrap: nowrap !important;
+				width: 100% !important;
 			}
-			/* Prevent individual columns from stretching to 100% screen width on mobile */
-			[data-testid="column"] {
+
+			/* Force individual button columns to shrink cleanly side-by-side */
+			div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+				width: 33.33% !important;
 				min-width: 0 !important;
+				flex-basis: 33.33% !important;
 			}
 			</style>
 			""",
 			unsafe_allow_html=True
 		)
-
+		
 		buttons = [
 			('7', '8', '9', '/'),
 			('4', '5', '6', '*'),
