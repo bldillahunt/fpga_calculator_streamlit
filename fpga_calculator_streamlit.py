@@ -216,6 +216,24 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if (show_numpad):
+	
+		st.markdown(
+			"""
+			<style>
+			/* Force columns within a row to stay side-by-side on mobile devices */
+			[data-testid="stHorizontalBlock"] {
+				flex-direction: row !important;
+				gap: 10px;
+			}
+			/* Prevent individual columns from stretching to 100% screen width on mobile */
+			[data-testid="column"] {
+				min-width: 0 !important;
+			}
+			</style>
+			""",
+			unsafe_allow_html=True
+		)
+
 		buttons = [
 			('7', '8', '9', '/'),
 			('4', '5', '6', '*'),
