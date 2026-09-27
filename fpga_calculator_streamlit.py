@@ -216,57 +216,57 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if (show_numpad):
-		with st.container(key="numpad_container"):
+		st.markdown(
+			"""
+			<style>
+			/* Limit the total width of the keypad so it doesn't stretch wildly */
+			.numpad-box {
+				max-width: 280px;
+				margin: 0 auto; /* Centers it on PC and mobile */
+			}
 
-			# --- SCOPED MOBILE GRID CSS ---
-			st.markdown(
-				"""
-				<style>
-				/* 1. Restrict the total keypad width so it doesn't look stretched on PC */
-				div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-element-cursor="numpad_container"]) {
-					max-width: 320px !important;
-					margin: 0 auto !important; /* Centers it perfectly */
-				}
+			/* Force the inner Streamlit rows to stay horizontal on phones */
+			.numpad-box div[data-testid="stHorizontalBlock"] {
+				display: flex !important;
+				flex-direction: row !important;
+				flex-wrap: nowrap !important;
+				gap: 6px !important;
+				margin-bottom: 6px !important;
+			}
 
-				/* 2. Target only the rows INSIDE our keypad container and force them horizontal */
-				div[data-element-cursor="numpad_container"] div[data-testid="stHorizontalBlock"] {
-					display: flex !important;
-					flex-direction: row !important;
-					flex-wrap: nowrap !important;
-					gap: 8px !important; /* Tightens space between buttons */
-					margin-bottom: 8px !important; /* Spacing between rows */
-				}
+			/* Force individual button columns to stay exactly 1/3 width */
+			.numpad-box div[data-testid="column"] {
+				width: 33.33% !important;
+				flex: 1 1 33.33% !important;
+				min-width: 0 !important;
+			}
+			</style>
+			""",
+			unsafe_allow_html=True
+		)
 
-				/* 3. Equal, locked sizing for every button column inside the container */
-				div[data-element-cursor="numpad_container"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-					width: 33.33% !important;
-					min-width: 0 !important;
-					flex-basis: 33.33% !important;
-				}
-				</style>
-				""",
-				unsafe_allow_html=True
-			)
+		# 2. Open our custom HTML wrapper
+		st.markdown('<div class="numpad-box"><h3>Number Pad</h3>', unsafe_allow_html=True)
 		
-			buttons = [
-				('7', '8', '9', '/'),
-				('4', '5', '6', '*'),
-				('1', '2', '3', '-'),
-				('0', '.', 'R', '+'),
-				('A', 'B', 'C', 'D'),
-				('E', 'F', 'Enter', '=')
-			]
+		buttons = [
+			('7', '8', '9', '/'),
+			('4', '5', '6', '*'),
+			('1', '2', '3', '-'),
+			('0', '.', 'R', '+'),
+			('A', 'B', 'C', 'D'),
+			('E', 'F', 'Enter', '=')
+		]
 
-			button_pressed = None
+		button_pressed = None
 
-			# Build rows horizontally inside the centered container tracking layout
-			for row in buttons:
-				cols = st.columns(4) # Enforces 4 exact equal columns across the container width
-				for i, val in enumerate(row):
-					with cols[i]:
-						# Each key receives a predictable dynamic mapping tag name
-						if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
-							button_pressed = val
+		# Build rows horizontally inside the centered container tracking layout
+		for row in buttons:
+			cols = st.columns(4) # Enforces 4 exact equal columns across the container width
+			for i, val in enumerate(row):
+				with cols[i]:
+					# Each key receives a predictable dynamic mapping tag name
+					if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
+						button_pressed = val
 	else:
 		buttons = [
 			('Reset', 'Enter')
