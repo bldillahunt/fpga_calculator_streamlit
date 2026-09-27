@@ -93,24 +93,28 @@ st.markdown(
 		font-size: 1.1rem !important;
 	}
 
-	/* --- GLOBAL FIXED LAYOUT OVERRIDES (Works on older Streamlit versions) --- */
-	/* Prevent 4-column blocks from collapsing on mobile viewports */
-	div[data-testid="stHorizontalBlock"] {
+	/* --- SCOPED FIXED LAYOUT OVERRIDES --- */
+	/* Bound the custom keypad area tightly so it never stretches wide */
+	.numpad-container-fixed {
+		max-width: 280px !important;
+		margin: 0 auto !important; /* Centers it perfectly inside the card */
+	}
+
+	/* Prevent columns ONLY within our keypad selector wrapper from dropping vertically on mobile viewports */
+	.numpad-container-fixed div[data-testid="stHorizontalBlock"] {
 		display: flex !important;
 		flex-direction: row !important;
 		flex-wrap: nowrap !important;
 		gap: 6px !important;
 	}
 
-	/* Force standard button elements to size proportionally side-by-side */
-	div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-		width: 25% !important;
-		flex: 1 1 25% !important;
+	/* Lock internal keys to a fixed portion of the custom 280px bounding box */
+	.numpad-container-fixed div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
 		min-width: 0 !important;
 	}
 	
-	/* Shrink text sizing and padding slightly to keep keys perfectly compact */
-	div[data-testid="column"] button {
+	/* Refine keycap spacing sizes nicely */
+	.numpad-container-fixed div[data-testid="column"] button {
 		padding: 4px 0 !important;
 		font-size: 14px !important;
 	}
@@ -179,7 +183,8 @@ with st.container(border=True):
 	show_numpad = st.checkbox("Show Mobile Number Pad")
 	
 	if show_numpad:
-		st.write("### Number Pad")
+		# 1. Open our isolated layout scoping card block
+		st.markdown('<div class="numpad-container-fixed"><h3>Number Pad</h3>', unsafe_allow_html=True)
 		
 		buttons_matrix = [
 			('7', '8', '9', '/'),
@@ -196,7 +201,11 @@ with st.container(border=True):
 				with cols[col_idx]:
 					if st.button(val, key=f"btn_{val}_{row_idx}_{col_idx}", use_container_width=True):
 						button_pressed = val
+
+		# 2. Close our wrapper tag safely
+		st.markdown('</div>', unsafe_allow_html=True)
 	else:
+		st.markdown('<div class="numpad-container-fixed">', unsafe_allow_html=True)
 		cols = st.columns(2)
 		with cols[0]:
 			if st.button("Reset", key="btn_Reset_default", use_container_width=True):
@@ -204,6 +213,7 @@ with st.container(border=True):
 		with cols[1]:
 			if st.button("Enter", key="btn_Enter_default", use_container_width=True):
 				button_pressed = "Enter"
+		st.markdown('</div>', unsafe_allow_html=True)
 
 keyboard_enter_pressed = False
 
