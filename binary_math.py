@@ -129,7 +129,7 @@ def binary_division(numerator, denominator, max_size):
 
 		offset += 1		
 		
-	return quotient
+	return quotient, partial_remainder
 
 def binary_multiplier(operand_a, operand_b):
 #	print("".join(map(str, operand_a)), "".join(map(str, operand_b)))
@@ -227,10 +227,10 @@ def binary_subtraction(A, B):
 	
 	difference_sum, difference_carry = binary_adder(operand_a_padded, operand_b_2s_comp)
 	
-#	if (difference_carry == 1):
-#		difference = [difference_carry] + difference_sum
-#	else:
-	difference = difference_sum
+	if ((A[0] == 1) and (B[0] == 0)) or ((A[0] == 0) and (B[0] == 1)):
+		difference = [difference_carry] + difference_sum
+	else:
+		difference = difference_sum
 		
 	binary_point_index = len(difference) - fraction_size
 	difference_bin_point = difference[:binary_point_index] + ['.'] + difference[binary_point_index:]
