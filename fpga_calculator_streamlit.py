@@ -230,6 +230,41 @@ with st.container(border=True):
                 if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
                     button_pressed = val
 
+with st.expander("Numeric Keypad", expanded=False):
+	st.markdown(
+		"""
+		<style>
+		button {
+			height: 40px;
+			min-height: 40px;
+			padding: 0px;
+			font-size: 16px;
+		}
+		</style>
+		""",
+		unsafe_allow_html=True
+	)
+
+	buttons = [
+		('7', '8', '9', '/'),
+		('4', '5', '6', '*'),
+		('1', '2', '3', '-'),
+		('0', '.', 'R', '+'),
+		('A', 'B', 'C', 'D'),
+		('E', 'F', 'Enter', '=')
+	]
+
+	button_pressed = None
+
+	# Build rows horizontally inside the centered container tracking layout
+	for row in buttons:
+		cols = st.columns(4) # Enforces 4 exact equal columns across the container width
+		for i, val in enumerate(row):
+			with cols[i]:
+				# Each key receives a predictable dynamic mapping tag name
+				if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
+					button_pressed = val
+
 keyboard_enter_pressed = False
 
 if typed_input != st.session_state.main_display_var:
