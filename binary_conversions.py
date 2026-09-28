@@ -112,7 +112,10 @@ def ieee754_hex_to_binary(ieee754_hex, p, lookup_table):
 
 def binary_to_real(n):
 	if isinstance(n, str):
-		n_int_list = binary_string_to_int_list(n)
+		if ('E' in n) or ('e' in n):
+			return "ERROR"
+		else:
+			n_int_list = binary_string_to_int_list(n)
 	elif isinstance(n, list):
 		n_int_list = n
 	else:
@@ -128,7 +131,7 @@ def binary_to_real(n):
 		fraction_list = n_int_list[binary_point_index+1:]
 		n_reassembled = integer_list + fraction_list
 		
-		if (binary_point_index > 0) and (n_int_list[0] == 1):
+		if (n_int_list[0] == 1):
 			n_2s_comp, carry = twos_complement(n_reassembled)
 		else:
 			n_2s_comp = n_reassembled
@@ -148,38 +151,71 @@ def binary_to_real(n):
 
 		integer_list_size = len(integer_list)
 		
+		if (debug_enable == True):
+			print(list_to_string(n_int_list), integer_list_size, list_to_string(integer_list))
+		
 		for i in range(0, integer_list_size):
+			if (debug_enable == True):
+				print("Made it here")
+				
 			if (integer_list[i] == 1):
 				integer_part += 2**(integer_list_size-1-i)
-	
+		
+		integer_part_decimal = Decimal(integer_part)
+		fraction_part_decimal = Decimal(fraction_part)
+		
 		if (n_int_list[0] == 1):
-			if False:
-				integer_list = binary_string_to_int_list(real_to_binary(str(integer_part), 0))
-				fraction_list = binary_string_to_int_list(real_to_binary(str(fraction_part), fraction_list_size))
-				integer_radix_index = integer_list.index('.')
-				fraction_radix_index = fraction_list.index('.')
-				twos_comp_input = integer_list[:integer_radix_index] + fraction_list[fraction_radix_index+1:]
-
-				if (debug_enable == True):
-					print(integer_part, fraction_part, list_to_string(integer_list), list_to_string(fraction_list))
-					print(integer_radix_index, fraction_radix_index, twos_comp_input)
-
-				real_value_2s_comp, carry = twos_complement(twos_comp_input)
-				real_value_with_radix = real_value_2s_comp[:integer_radix_index] + ['.'] + real_value_2s_comp[integer_radix_index:]
+			integer_neg = 0 - integer_part_decimal
+			fraction_neg = 0 - fraction_part_decimal
+			integer_neg_string = str(integer_neg)
+			fraction_neg_string = str(fraction_neg)
 			
-			real_int_2s_comp = 0 - integer_part
-			real_frac_2s_comp = 0 - fraction_part
-			fraction_part_string = str(real_frac_2s_comp)
-			fraction_part_stripped = fraction_part_string[2:]
-			real_output = str(real_int_2s_comp) + fraction_part_stripped
+			if (integer_neg != 0) and (fraction_neg != 0):
+				if ('.' in integer_neg_string) and ('.' in fraction_neg_string):
+					if ('-' in fraction_neg_string):
+						real_output = integer_neg_string + fraction_neg_string[2:]
+					else:
+						real_output = integer_neg_string + fraction_neg_string[1:]
+				else:
+					if ('-' in fraction_neg_string):
+						if ('.' in fraction_neg_string):
+							real_output = integer_neg_string + fraction_neg_string[2:]
+						else:
+							real_output = integer_neg_string
+					else:
+						if ('.' in fraction_neg_string):
+							real_output = integer_neg_string + fraction_neg_string[2:]
+						else:
+							real_output = integer_neg_string
+			elif (integer_neg != 0) and (fraction_neg == 0):
+				real_output = integer_neg_string
+			elif (integer_neg == 0) and (fraction_neg != 0):
+				real_output = fraction_neg_string
+			else:
+				real_output = str(0)
 		else:
-			real_output = str(integer_part) + str(fraction_part)
+			integer_string = str(integer_part_decimal)
+			fraction_string = str(fraction_part_decimal)
+
+			if (integer_part_decimal != 0) and (fraction_part_decimal != 0):
+				if ('.' in integer_string) and ('.' in fraction_string):
+					real_output = integer_string + fraction_string[2:]
+				else:
+					if ('.' in fraction_string):
+						real_output = integer_string + fraction_string[1:]
+					else:
+						real_output = integer_string
+			elif (integer_part_decimal != 0) and (fraction_part_decimal == 0):
+				real_output = integer_string
+			elif (integer_part_decimal == 0) and (fraction_part_decimal != 0):
+				real_output = fraction_string
+			else:
+				real_output = str(0)
 	else:
-		binary_point_index = 0
 		integer_list = n_int_list
 		integer_part = 0
-		integer_radix_index = integer_list.index('.')
-		twos_comp_input = integer_list[:integer_radix_index]
+		fraction_part = 0
+		twos_comp_input = integer_list
 
 		if (integer_list[0] == 1):
 			n_2s_comp, carry = twos_complement(integer_list)
@@ -192,12 +228,13 @@ def binary_to_real(n):
 			if (n_2s_comp[i] == 1):
 				integer_part += 2**(integer_list_size-1-i)
 
+		integer_part_decimal = Decimal(integer_part)
+		
 		if (n_int_list[0] == 1):
-			integer_list = binary_string_to_int_list(real_to_binary(str(integer_part), 0))
-			real_value_2s_comp, carry = twos_complement(integer_list)
-			real_output = list_to_string(real_value_2s_comp)
+			real_int_2s_comp = 0 - integer_part_decimal
+			real_output = str(real_int_2s_comp)
 		else:
-			real_output = str(integer_part)
+			real_output = str(integer_part_decimal)
 
 	if (debug_enable == True):
 		print(integer_part, fraction_part)
