@@ -239,6 +239,7 @@ with st.expander("Numeric Keypad", expanded=False):
 			min-height: 40px;
 			padding: 0px;
 			font-size: 16px;
+			width: 40px;
 		}
 		</style>
 		""",
