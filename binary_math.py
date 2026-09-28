@@ -129,7 +129,7 @@ def binary_division(numerator, denominator, max_size):
 
 		offset += 1		
 		
-	return quotient, partial_remainder
+	return quotient
 
 def binary_multiplier(operand_a, operand_b):
 #	print("".join(map(str, operand_a)), "".join(map(str, operand_b)))
