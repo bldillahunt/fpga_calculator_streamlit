@@ -97,7 +97,7 @@ def int_list_to_binary_string(n, size):
 	return binary_list
 
 # The core of the real-to-binary conversion
-def real_to_binary(n, default_int_size, default_frac_size):
+def real_to_binary(n, default_frac_size):
 	if '.' in n:
 		decimal_point_index = n.find('.')
 
@@ -155,6 +155,8 @@ def real_to_binary(n, default_int_size, default_frac_size):
 	fraction_compare_value = 1 * (10**fraction_size)
 	binary_frac_value = []
 
+#	print(fraction_compare_value, fraction_sum)
+	
 	if (fraction_size > 0):
 		for i in range(0, default_frac_size):
 			fraction_sum = fraction_sum * 2
@@ -164,6 +166,8 @@ def real_to_binary(n, default_int_size, default_frac_size):
 				binary_frac_value.append('1')
 			else:
 				binary_frac_value.append('0')
+			
+#			print(fraction_sum, "".join(binary_frac_value))
 	else:
 		binary_frac_value.append('0')
 
@@ -171,7 +175,7 @@ def real_to_binary(n, default_int_size, default_frac_size):
 	binary_int_value = []
 	
 	if (integer_size > 0):
-		for i in range(0, default_int_size):
+		while (integer_quotient != 0):
 			binary_bit = integer_quotient % 2
 			binary_int_value.append(str(binary_bit))
 			integer_quotient = integer_quotient//2
@@ -183,7 +187,7 @@ def real_to_binary(n, default_int_size, default_frac_size):
 	single_binary_int = "".join(binary_int_value)
 	single_binary_frac = "".join(binary_frac_value)
 
-	return single_binary_int + '.' + single_binary_frac
+	return '0' + single_binary_int + '.' + single_binary_frac
 
 def binary_point_removal(operand_a, operand_b):
 	a_size = len(operand_a)

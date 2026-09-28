@@ -1,5 +1,4 @@
 import struct
-from decimal import Decimal, getcontext
 import time
 from fixedpoint import FixedPoint
 import math
@@ -7,10 +6,13 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Literal
 from binary_support import twos_complement_bin_rational, real_to_binary, hex_to_binary, int_list_to_binary_string, twos_complement, binary_string_to_int_list, list_to_string, remove_msbs
+from decimal import Decimal
+
+debug_enable = False
 
 # Wrapper for the real-to-binary converter that handles negative numbers	
 def real_to_twos_comp_binary(n, default_int_size, default_frac_size):
-	n_binary = real_to_binary(n, default_int_size, default_frac_size)
+	n_binary = real_to_binary(n, default_frac_size)
 	
 	if (float(n) < 0):
 		binary_list = twos_complement_bin_rational(n_binary)
@@ -109,19 +111,24 @@ def ieee754_hex_to_binary(ieee754_hex, p, lookup_table):
 	return binary_output
 
 def binary_to_real(n):
-	n_size = len(n)
-	
-	n_int_list = n
+	if isinstance(n, str):
+		n_int_list = binary_string_to_int_list(n)
+	elif isinstance(n, list):
+		n_int_list = n
+	else:
+		return "ERROR"
+
+	n_size = len(n_int_list)
 	
 #	print("n_int_list = ", n_int_list)
 	
-	if ('.' in n):
-		binary_point_index = n.index('.')
+	if ('.' in n_int_list):
+		binary_point_index = n_int_list.index('.')
 		integer_list = n_int_list[:binary_point_index]
 		fraction_list = n_int_list[binary_point_index+1:]
 		n_reassembled = integer_list + fraction_list
 		
-		if (binary_point_index > 0) and (n[0] == 1):
+		if (binary_point_index > 0) and (n_int_list[0] == 1):
 			n_2s_comp, carry = twos_complement(n_reassembled)
 		else:
 			n_2s_comp = n_reassembled
@@ -145,15 +152,34 @@ def binary_to_real(n):
 			if (integer_list[i] == 1):
 				integer_part += 2**(integer_list_size-1-i)
 	
-		if (n[0] == 1) and (binary_point_index > 0):
-			real_output = -(integer_part + fraction_part)
+		if (n_int_list[0] == 1):
+			if False:
+				integer_list = binary_string_to_int_list(real_to_binary(str(integer_part), 0))
+				fraction_list = binary_string_to_int_list(real_to_binary(str(fraction_part), fraction_list_size))
+				integer_radix_index = integer_list.index('.')
+				fraction_radix_index = fraction_list.index('.')
+				twos_comp_input = integer_list[:integer_radix_index] + fraction_list[fraction_radix_index+1:]
+
+				if (debug_enable == True):
+					print(integer_part, fraction_part, list_to_string(integer_list), list_to_string(fraction_list))
+					print(integer_radix_index, fraction_radix_index, twos_comp_input)
+
+				real_value_2s_comp, carry = twos_complement(twos_comp_input)
+				real_value_with_radix = real_value_2s_comp[:integer_radix_index] + ['.'] + real_value_2s_comp[integer_radix_index:]
+			
+			real_int_2s_comp = 0 - integer_part
+			real_frac_2s_comp = 0 - fraction_part
+			fraction_part_string = str(real_frac_2s_comp)
+			fraction_part_stripped = fraction_part_string[2:]
+			real_output = str(real_int_2s_comp) + fraction_part_stripped
 		else:
-			real_output = integer_part + fraction_part
+			real_output = str(integer_part) + str(fraction_part)
 	else:
 		binary_point_index = 0
 		integer_list = n_int_list
 		integer_part = 0
-		fraction_part = 0
+		integer_radix_index = integer_list.index('.')
+		twos_comp_input = integer_list[:integer_radix_index]
 
 		if (integer_list[0] == 1):
 			n_2s_comp, carry = twos_complement(integer_list)
@@ -166,11 +192,16 @@ def binary_to_real(n):
 			if (n_2s_comp[i] == 1):
 				integer_part += 2**(integer_list_size-1-i)
 
-		if (n[0] == 1):
-			real_output = -(integer_part + fraction_part)
+		if (n_int_list[0] == 1):
+			integer_list = binary_string_to_int_list(real_to_binary(str(integer_part), 0))
+			real_value_2s_comp, carry = twos_complement(integer_list)
+			real_output = list_to_string(real_value_2s_comp)
 		else:
-			real_output = integer_part + fraction_part
-		
+			real_output = str(integer_part)
+
+	if (debug_enable == True):
+		print(integer_part, fraction_part)
+					
 	return real_output
 
 def binary_to_hexadecimal(n, lut):
