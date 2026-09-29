@@ -167,64 +167,21 @@ with st.container(border=True):
 			label_visibility="collapsed"
 		)
 
-	use_keypad = st.checkbox("Enable Mobile Keypad", value=False)
-	
-	if (use_keypad == True):
-		st.html("""
-		<style>
-		div[data-testid="stVScrollBlock"]:has(div[class*="st-key-keypad_row"]) {
-			flex-direction: row !important;
-			flex-wrap: nowrap !important;
-			gap: 8px !important;
-		}
-		div[class*="st-key-keypad_row"] > div[data-testid="column"] {
-			width: 25% !important;
-			flex: 1 1 0% !important;
-			min-width: 0px !important;
-		}
-		div[class*="st-key-keypad_row"] button {
-			width: 100% !important;
-			padding: 12px 0px !important;
-		}
-		</style>
-		""")
+	buttons = [
+		('Reset', 'Enter')
+	]
 
-		buttons = [
-			('7', '8', '9', '/'),
-			('4', '5', '6', '*'),
-			('1', '2', '3', '-'),
-			('0', '.', 'R', '+'),
-			('A', 'B', 'C', 'D'),
-			('E', 'F', 'Enter', '=')
-		]
+	button_value = None
+	button_pressed = False
 
-		button_value = None
-		button_pressed = False
-
-		for row_idx, row in enumerate(buttons):
-			with st.container(key=f"keypad_row_{row_idx}"):
-				cols = st.columns(4)
-				for col_idx, val in enumerate(row):
-					with cols[col_idx]:
-						if st.button(val, key=f"btn_{row_idx}_{col_idx}"):
-							button_value = val
-							button_pressed = True
-	else:
-		buttons = [
-			('Reset', 'Enter')
-		]
-
-		button_value = None
-		button_pressed = False
-
-		# Build rows horizontally inside the centered container tracking layout
-		for row in buttons:
-			cols = st.columns(2) 
-			for i, val in enumerate(row):
-				with cols[i]:
-					if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
-						button_value = val
-						button_pressed = True
+	# Build rows horizontally inside the centered container tracking layout
+	for row in buttons:
+		cols = st.columns(2) 
+		for i, val in enumerate(row):
+			with cols[i]:
+				if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
+					button_value = val
+					button_pressed = True
 
 keyboard_enter_pressed = False
 
