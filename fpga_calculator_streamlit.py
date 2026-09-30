@@ -5,16 +5,28 @@ import math
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Literal
-from binary_support import precision_profile, lookup_table, twos_complement, binary_string_to_int_list, int_list_to_binary_string, binary_point_removal, twos_complement_bin_rational, list_to_string, remove_msbs, binary_point_alignment
-from binary_conversions import real_to_twos_comp_binary, hexadecimal_to_binary, ieee754_hex_to_binary, binary_to_real, binary_to_hexadecimal, binary_to_ieee754
-from binary_math import binary_division, binary_multiplier, binary_adder, binary_subtraction, binary_modulo, binary_twos_complement
-from binary_logic import binary_and, binary_or, binary_xor, binary_not
 from calculator_top import compute_evaluation_step
 
 # --- Page Configuration ---
 # 1. Page Settings
-st.set_page_config(page_title="", layout="centered")
-st.write("This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like <operand1><operator><operand2> or <operand1>, using operators: +, -, *, /, %, &, |, ^, ~ (invert), or ! (2's comp)")
+#st.set_page_config(page_title="", layout="centered")
+#st.write("This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like <operand1><operator><operand2> or <operand1>, using operators: +, -, *, /, %, &, |, ^, ~ (invert), or ! (2's comp)")
+st.markdown(
+	"""
+	<div style="
+		margin-left: calc(-50vw + 275px);
+		margin-right: calc(-50vw + 275px);
+		max-width: 100vw;
+		width: auto;
+		padding: 0 20px 20px 20px;
+		box-sizing: border-box;
+	">
+	This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like &lt;operand1&gt;&lt;operator&gt;&lt;operand2&gt; or &lt;operand1&gt;, using operators: +, -, *, /, %, &amp;, |, ^, ~ (invert), or ! (2's comp)
+	</div>
+	""",
+	unsafe_allow_html=True
+)
+
 
 # Initialize display tracking variables
 if "display" not in st.session_state:
