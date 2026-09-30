@@ -7,7 +7,9 @@ from dataclasses import dataclass
 from typing import List, Literal
 from binary_support import precision_profile, lookup_table, twos_complement, binary_string_to_int_list, int_list_to_binary_string, binary_point_removal, twos_complement_bin_rational, list_to_string, remove_msbs, binary_point_alignment
 from binary_conversions import real_to_twos_comp_binary, hexadecimal_to_binary, ieee754_hex_to_binary, binary_to_real, binary_to_hexadecimal, binary_to_ieee754
-from binary_math import binary_division, binary_multiplier, binary_adder, binary_subtraction
+from binary_math import binary_division, binary_multiplier, binary_adder, binary_subtraction, binary_modulo, binary_twos_complement
+from binary_logic import binary_and, binary_or, binary_xor, binary_not
+from calculator_top import compute_evaluation_step
 
 # --- Page Configuration ---
 # 1. Page Settings
@@ -229,7 +231,15 @@ def verify_fp64_input(input_string):
 	return len(input_string) != 16 or not is_valid_hex(input_string)
 
 def verify_operator(input_string):
-	return input_string not in "+-*/"
+	if (input_string in ("&", "|", "^", "~", "!")):
+		if (input_mode[1] not in ("REAL", "FP32", "FP64")) and (output_mode[1] not in ("REAL", "FP32", "FP64")):
+			logic_error = False
+		else:
+			logic_error = True
+	else:
+		logic_error = False
+
+	return (input_string not in ("+", "-", "*", "/", "%", "&", "|", "^", "~", "!", "")) or logic_error
 
 def convert_to_binary(operand):
 	if (input_mode[1] == "REAL"):
@@ -274,47 +284,9 @@ def binary_math_operation(operand1, operand2, operator):
 		else:
 			max_size = int_bits + frac_bits
 
-		operand1_no_bin_point, operand2_no_bin_point, operand1_fraction_size, operand2_fraction_size = binary_point_alignment(operand1, operand2, False)
+		quotient = binary_division(operand1, operand2, max_size)
 
-		if (operand1[0] == 1):
-			operand1_2s_comp, op1_carry = twos_complement(operand1_no_bin_point)
-			sign_operand1 = 1
-		else:
-			operand1_2s_comp = operand1_no_bin_point
-			sign_operand1 = 0
-
-		if (operand2[0] == 1):
-			operand2_2s_comp, op2_carry = twos_complement(operand2_no_bin_point)
-			sign_operand2 = 1
-		else:
-			operand2_2s_comp = operand2_no_bin_point
-			sign_operand2 = 0
-
-		quotient = binary_division(operand1_2s_comp, operand2_2s_comp, max_size)
-
-		if ((sign_operand1 ^ sign_operand2) == 1):
-			quotient_size = len(quotient)
-
-			if ('.' in quotient):
-				quotient_radix_index = quotient.index('.')
-				quotient.pop(quotient_radix_index)
-			else:
-				quotient_radix_index = quotient_size
-
-			if (quotient_radix_index < quotient_size):
-				quotient_fraction_size = quotient_size - (quotient_radix_index + 1)
-			else:
-				quotient_fraction_size = 0
-
-			quotient_no_bin_point = quotient
-			quotient_2s_comp, carry_quotient = twos_complement(quotient_no_bin_point)
-
-			quotient_2s_comp_bin_point = quotient_2s_comp[:quotient_size - quotient_fraction_size - 1] + ['.'] + quotient_2s_comp[quotient_size - quotient_fraction_size - 1:]
-
-			math_result_2s_comp = quotient_2s_comp_bin_point
-		else:
-			math_result_2s_comp = quotient
-		math_result = math_result_2s_comp
+		math_result = quotient
 	elif (operator == "*"):
 		math_result = binary_multiplier(operand1, operand2)
 	elif (operator == "+"):
@@ -337,6 +309,19 @@ def binary_math_operation(operand1, operand2, operator):
 		math_result = sum_result[:binary_point_index] + ['.'] + sum_result[binary_point_index:]
 	elif (operator == "-"):
 		math_result = binary_subtraction(operand1, operand2)
+	elif (operator == "%"):
+		max_size = self.int_bits.get() + self.frac_bits.get()
+		math_result = binary_modulo(operand1, operand2, max_size)
+	elif (operator == "&"):
+		math_result = binary_and(operand1, operand2)
+	elif (operator == "|"):
+		math_result = binary_or(operand1, operand2)
+	elif (operator == "^"):
+		math_result = binary_xor(operand1, operand2)
+	elif (operator == "~"):
+		math_result = binary_not(operand1)
+	elif (operator == "!"):
+		math_result = binary_twos_complement(operand1)
 
 	return math_result
 
@@ -408,71 +393,81 @@ def parse_input_string(input_string):
 	left = ""
 	op = ""
 	right = ""
-	operand1_present = False
-	operator_present = False
-	operand2_present = False
+	input_error = False
+
+#		print('parser input string = ', input_string)
 
 	while (True):
 		match state:
 			case 'Empty_String_Check':
 				if not input_string:
-					return left, op, right
+					input_error = True
+					return left, op, right, input_error
 				else:
 					state = 'First_Character'
 			case 'First_Character':
-				if (input_string[input_index] == '+'):
+				if (input_string[input_index] == '+') or (input_string[input_index] == '~') or (input_string[input_index] == '!'):
+					if (input_string[input_index] == '~') or (input_string[input_index] == '!'):
+						op = input_string[0]
+
+					input_index = input_index + 1
+
 					state = 'First_Operand'
-				elif (input_string[input_index] == '-') or (input_string[input_index].isalnum()):
+				elif (input_string[input_index] == '-') or (input_string[input_index].isalnum()) or (input_string[input_index] == "."):
 					left += input_string[input_index]
 
 					if (len(input_string) > 1):
 						input_index = input_index + 1
 						state = 'First_Operand'
 					else:
-						return left, op, right
+						return left, op, right, input_error
 				else:
-					return left, op, right
+					input_error = True
+					return left, op, right, input_error
 			case 'First_Operand':
-				while input_string[input_index] not in ("+", "-", "*", "/", ""):
-					left += input_string[input_index]
+				while (input_string[input_index] not in ("+", "-", "*", "/", "%", "&", "|", "^", "")):
+					if (input_string[input_index].isalnum()) or (input_string[input_index] == "."):
+						left += input_string[input_index]
 
-					if (input_index < data_length-1):
-						input_index = input_index + 1
+						if (input_index < data_length-1):
+							input_index = input_index + 1
+						else:
+							return left, op, right, input_error
 					else:
-						operand1_present = True
-						return left, op, right
+						input_error = True
+						return left, op, right, input_error
 				else:
-					operand1_present = True
-					operator_present = True
-					op = input_string[input_index]
+					if (op != '~') and (op != '!'):
+						op = input_string[input_index]
+
 					input_index = input_index + 1
 
 				if (input_index < len(input_string)):
 					if (input_string[input_index] not in ("")):
 						state = 'Second_Operand'
 					else:
-						operand2_present = False
-						return left, op, right
+						return left, op, right, input_error
 				else:
-					operand2_present = False
-					return left, op, right
+					return left, op, right, input_error
 			case 'Second_Operand':
 				while input_string[input_index] not in (""):
-					right += input_string[input_index]
+					if (input_string[input_index].isalnum()) or (input_string[input_index] == ".") or ((right == "") and (input_string[input_index] == "-")):
+						right += input_string[input_index]
 
-					if (input_index < data_length-1):
-						input_index = input_index + 1
+						if (input_index < data_length-1):
+							input_index = input_index + 1
+						else:
+							return left, op, right, input_error
 					else:
-						operand2_present = True
-						return left, op, right
+						input_error = True
+						return left, op, right, input_error
 
-				operand2_present = True
-				return left, op, right
+				return left, op, right, input_error
 
 def get_operands():
 	raw_input = st.session_state.main_display_var
-	operand1, operator, operand2 = parse_input_string(raw_input)
-	return operand1, operand2, operator
+	operand1, operator, operand2, input_error = parse_input_string(raw_input)
+	return operand1, operand2, operator, input_error
 
 # Process Button Actions
 button_push_result = None
@@ -498,78 +493,11 @@ if (button_push_result in ('Reset', 'Enter')) or keyboard_enter_pressed or butto
 		# THE FIX: Bump the counter to force Streamlit to wipe the text field clean
 		st.session_state.input_widget_counter += 1
 		st.rerun()
-		
 	elif button_push_result in ('Enter'):
-		# Parse inputs
-		operand1, operand2, operator = get_operands()
-		
-		operand1_data_error = False
-		operand2_data_error = False
-		operator_error = False
-		
-		nibble_size = int_bits // 4
-		operand2_present = True if operand2 != "" else False
-		
-		# Validation Pipeline based on Input Format
-		if input_mode[1] == "REAL":
-			operand1_data_error = verify_real_input(operand1)
-			if operand2_present:
-				operand2_data_error = verify_real_input(operand2)
-				
-		elif input_mode[1] == "HEX":
-			if (len(operand1) < nibble_size) and (len(operand1) > 0):
-				if any(item in operand1[0] for item in HEX_NEGATIVE_LIST):
-					operand1 = operand1.rjust(nibble_size, "F")
-				else:
-					operand1 = operand1.rjust(nibble_size, "0")
-			operand1_data_error = verify_hex_input(operand1)
-			
-			if operand2_present:
-				if (len(operand2) < nibble_size) and (len(operand2) > 0):
-					if any(item in operand2[0] for item in HEX_NEGATIVE_LIST):
-						operand2 = operand2.rjust(nibble_size, "F")
-					else:
-						operand2 = operand2.rjust(nibble_size, "0")
-				operand2_data_error = verify_hex_input(operand2)
-				
-		elif input_mode[1] == "BIN":
-			operand1_data_error = verify_bin_input(operand1)
-			if operand2_present:
-				operand2_data_error = verify_bin_input(operand2)
-				
-		elif input_mode[1] == "FP32":
-			exponent_size, mantissa_size = 8, 23
-			operand1_data_error = verify_fp32_input(operand1)
-			if operand2_present:
-				operand2_data_error = verify_fp32_input(operand2)
-				
-		elif input_mode[1] == "FP64":
-			exponent_size, mantissa_size = 11, 52
-			operand1_data_error = verify_fp64_input(operand1)
-			if operand2_present:
-				operand2_data_error = verify_fp64_input(operand2)
-
-		operator_error = verify_operator(operator)
-		
-		# Core Math Execution
-		if not operand1_data_error and not operand2_data_error and not operator_error:
-			operand1_binary = convert_to_binary(operand1)
-			
-			if operand2_present:
-				operand2_binary = convert_to_binary(operand2)
-				binary_result = binary_math_operation(operand1_binary, operand2_binary, operator)
-				calculator_result = convert_from_binary(binary_result)
-			else:
-				calculator_result = convert_from_binary(operand1_binary)
-			
-			st.session_state.aux_display_var = str(calculator_result)
-			st.rerun()
-		else:
-			st.session_state.main_display_var = ""
-			if "input_win" in st.session_state:
-				st.session_state.input_win = ""
-			st.session_state.aux_display_var = "ERROR"
-			st.rerun()
+		main_display_value, calculator_result = compute_evaluation_step(st.session_state.main_display_var, input_mode[1], output_mode[1], int_bits, frac_bits, False)
+		st.session_state.main_display_var = main_display_value
+		st.session_state.aux_display_var = calculator_result
+		st.rerun()
 	else:
 		# Append typed keys to your main input tracker
 		st.session_state.main_display_var += str(button_push_result)
