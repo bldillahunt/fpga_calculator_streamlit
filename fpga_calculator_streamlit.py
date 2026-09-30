@@ -14,7 +14,7 @@ from calculator_top import compute_evaluation_step
 # --- Page Configuration ---
 # 1. Page Settings
 st.set_page_config(page_title="", layout="centered")
-st.write("This calculator can perform data type conversions and it can perform basic math operations on five different data types.  Select the input type, the output type, the number of integer bits and the number of fraction bits. The number of integer bits and the number of fraction bits are needed for division and for hexadecimal values.  There is no need for prefixes such as 0x or 0b.  The input box will accept data in the form of: <operand1><operator><operand2> or <operand1>")
+st.write("This calculator can perform data type conversions, basic math operations and logic operations on five different data types (logic is limited to hex and bin). The output has nearly infinite precision because all of the math is done in binary. The number of integer bits and the number of fraction bits are needed for division and for hexadecimal values.  There is no need for prefixes such as 0x or 0b.  The input box will accept data in the form of: <operand1><operator><operand2> or <operand1>. Operator can be +, -, *, /, %, &, |, ^, ~ (invert), or ! (2's comp)")
 
 # Initialize display tracking variables
 if "display" not in st.session_state:
