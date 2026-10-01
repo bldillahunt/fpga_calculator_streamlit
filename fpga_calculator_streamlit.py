@@ -11,22 +11,31 @@ from calculator_top import compute_evaluation_step
 # 1. Page Settings
 #st.set_page_config(page_title="", layout="centered")
 #st.write("This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like <operand1><operator><operand2> or <operand1>, using operators: +, -, *, /, %, &, |, ^, ~ (invert), or ! (2's comp)")
+
 st.markdown(
-	"""
-	<div style="
-		margin-left: calc(-50vw + 275px);
-		margin-right: calc(-50vw + 275px);
-		max-width: 100vw;
-		width: auto;
-		padding: 0 20px 20px 20px;
-		box-sizing: border-box;
-	">
-	This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like &lt;operand1&gt;&lt;operator&gt;&lt;operand2&gt; or &lt;operand1&gt;, using operators: +, -, *, /, %, &amp;, |, ^, ~ (invert), or ! (2's comp)
-	</div>
-	""",
-	unsafe_allow_html=True
+    """
+    <style>
+    .sticky-top {
+        position: fixed;
+        top: 3.5rem; /* Adjusts the spacing so it sits neatly below the Streamlit top banner */
+        left: 0;
+        right: 0;
+        background-color: white; /* Matches your background so content doesn't bleed through while scrolling */
+        padding: 1rem 2rem;
+        z-index: 999999; /* Forces the text to stay on top of all other elements */
+        border-bottom: 1px solid #e6e6e6; /* Optional: adds a clean separator line */
+    }
+    
+    /* Optional: Adds top padding to the rest of your app content so it doesn't get hidden underneath your sticky header */
+    .block-container {
+        padding-top: 7rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
+st.markdown('<div class="sticky-top"><p>  This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like &ltoperand1&gt&ltoperator&gt&ltoperand2&gt or &ltoperand1&gt, using operators: +, -, *, /, %, &amp;, |, ^, ~ (invert), or ! (2s comp). Logic operations do not using radix point.   </p></div>', unsafe_allow_html=True)
 
 # Initialize display tracking variables
 if "display" not in st.session_state:
@@ -98,7 +107,8 @@ st.markdown(
 		border-radius: 16px !important;
 		box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.05);
 		max-width: 550px !important;
-		margin: 40px auto !important;
+		margin: 200px auto !important;
+		max-height: 500px;
 	}
 
 	/* Clean up internal component spacing and match container background */
