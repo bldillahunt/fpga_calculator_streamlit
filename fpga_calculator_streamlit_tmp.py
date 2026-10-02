@@ -7,6 +7,36 @@ from dataclasses import dataclass
 from typing import List, Literal
 from calculator_top import compute_evaluation_step
 
+# --- Page Configuration ---
+# 1. Page Settings
+#st.set_page_config(page_title="", layout="centered")
+#st.write("This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like <operand1><operator><operand2> or <operand1>, using operators: +, -, *, /, %, &, |, ^, ~ (invert), or ! (2's comp)")
+
+st.markdown(
+    """
+    <style>
+    .sticky-top {
+        position: fixed;
+        top: 3.5rem; /* Adjusts the spacing so it sits neatly below the Streamlit top banner */
+        left: 0;
+        right: 0;
+        background-color: white; /* Matches your background so content doesn't bleed through while scrolling */
+        padding: 1rem 2rem;
+        z-index: 999999; /* Forces the text to stay on top of all other elements */
+        border-bottom: 1px solid #e6e6e6; /* Optional: adds a clean separator line */
+    }
+    
+    /* Optional: Adds top padding to the rest of your app content so it doesn't get hidden underneath your sticky header */
+    .block-container {
+        padding-top: 7rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<div class="sticky-top"><p>  This calculator handles basic math, data type conversions, and logic operations (logic limited to hex and bin) across five data types. Operating entirely in binary, it delivers nearly infinite precision. Division and hexadecimal values require specifying the number of integer and fraction bits. Prefixes like 0x or 0b are unnecessary. The input box accepts formats like &ltoperand1&gt&ltoperator&gt&ltoperand2&gt or &ltoperand1&gt, using operators: +, -, *, /, %, &amp;, |, ^, ~ (invert), or ! (2s comp). Logic operations do not using radix point.   </p></div>', unsafe_allow_html=True)
+
 # Initialize display tracking variables
 if "display" not in st.session_state:
 	st.session_state.display = ""
@@ -61,25 +91,6 @@ MODES = [
 # 3. Displays
 # Track whether the user presses Enter on their physical keyboard inside the text field
 # --- Complete Layout & Color Isolation Styling ---
-
-st.markdown(
-    """
-    <div style="text-align: center;">
-        <span style="
-            display: inline-block; 
-            border: 0px solid #ffffff; 
-            border-radius: 0px; 
-            padding: 0px 5px; 
-            font-size: 12px; 
-            background-color: #e0f2fe;
-        ">
-            FPGA Style Calculator
-        </span>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
-
 st.markdown(
 	"""
 	<style>
@@ -89,7 +100,7 @@ st.markdown(
 	}
 
 	/* 2. STYLE THE MAIN APP CONTAINER AS A CENTERED CARD (Light Blue) */
-/*	[data-testid="stMainBlockContainer"] {
+	[data-testid="stMainBlockContainer"] {
 		background-color: #e0f2fe !important;
 		border: 2px solid #bae6fd !important;
 		padding: 40px !important;
@@ -99,7 +110,7 @@ st.markdown(
 		margin: 200px auto !important;
 		max-height: 500px;
 	}
-*/
+
 	/* Clean up internal component spacing and match container background */
 	[data-testid="stVerticalBlock"], 
 	[data-testid="stVerticalBlockBorderWrapper"],
@@ -181,7 +192,7 @@ with st.container(border=True):
 		)
 
 	buttons = [
-		('Reset', 'Enter', 'Help')
+		('Reset', 'Enter')
 	]
 
 	button_value = None
@@ -189,7 +200,7 @@ with st.container(border=True):
 
 	# Build rows horizontally inside the centered container tracking layout
 	for row in buttons:
-		cols = st.columns(3) 
+		cols = st.columns(2) 
 		for i, val in enumerate(row):
 			with cols[i]:
 				if st.button(val, key=f"btn_{val}_{i}", use_container_width=True):
@@ -212,7 +223,7 @@ if typed_input != st.session_state.main_display_var:
 # Explicitly link your button press assignment here
 button_push_result = button_value 
 
-if (button_push_result in ('Reset', 'Enter', "Help")) or keyboard_enter_pressed or button_pressed:
+if (button_push_result in ('Reset', 'Enter')) or keyboard_enter_pressed or button_pressed:
  
 	if keyboard_enter_pressed and not button_push_result:
 		button_push_result = 'Enter'
@@ -231,20 +242,6 @@ if (button_push_result in ('Reset', 'Enter', "Help")) or keyboard_enter_pressed 
 		st.session_state.main_display_var = main_display_value
 		st.session_state.aux_display_var = calculator_result
 		st.rerun()
-	elif (button_push_result == "Help"):
-		# Format box using code block style
-		st.code("Format:\n<operand1><operator><operand2>\nor\n<operand1>\nor<operator><operand1>")
-
-		# Bullet points instructions
-		st.markdown("""
-		* **Inputs:** Supports Real, Hex, Bin, FP32, and FP64.
-		* **Binary:** Entered in 2's complement with a binary point.
-		* **Operations:** Select math (+,-,*,/,%) or unary logic (&,|,^,~,!).
-		""")
-
-		# Close button built directly into the pop-up frame
-		if st.button("Close", use_container_width=True):
-			st.rerun()
 	else:
 		# Append typed keys to your main input tracker
 		st.session_state.main_display_var += str(button_push_result)
