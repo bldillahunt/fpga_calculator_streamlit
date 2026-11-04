@@ -10,10 +10,6 @@ from calculator_top import compute_evaluation_step
 # Initialize display tracking variables
 if "display" not in st.session_state:
 	st.session_state.display = ""
-
-# Initialize display tracking variables
-if "display" not in st.session_state:
-	st.session_state.display = ""
 	
 # THE FIX: Track widget versions to force-clear text fields
 if "input_widget_counter" not in st.session_state:
@@ -120,6 +116,21 @@ st.markdown(
 		font-family: monospace !important;
 		font-size: 1.1rem !important;
 	}
+	</style>
+	""",
+	unsafe_allow_html=True
+)
+
+st.markdown(
+	"""
+	<style>
+		<meta name="description" content="An online arbitrary-precision calculator for FPGA engineers. Supports IEEE 754 floating-point, signed two's complement binary, and custom fixed-point binary math.">
+		<meta name="keywords" content="FPGA calculator, programmer's calculator, IEEE 754 converter, two's complement calculator, fixed point binary point">
+		<meta name="author" content="bldillahunt">
+
+		<!-- Open Graph tags to look good when linked on Reddit, Discord, or GitHub -->
+		<meta property="og:title" content="FPGA & Programmer's Calculator (Desktop Version)">
+		<meta property="og:description" content="Arbitrary-precision binary math, IEEE 754 precision, and signed two's complement calculations.">
 	</style>
 	""",
 	unsafe_allow_html=True
@@ -238,7 +249,7 @@ if (button_push_result in ('Reset', 'Enter', "Help")) or keyboard_enter_pressed 
 		# Bullet points instructions
 		st.markdown("""
 		* **Inputs:** Supports Real, Hex, Bin, FP32, and FP64.
-		* **Binary:** Entered in 2's complement with a binary point.
+		* **Binary:** Entered in 2's complement with a binary point (no 0b).
 		* **Operations:** Select math (+,-,*,/,%) or unary logic (&,|,^,~,!).
 		""")
 
