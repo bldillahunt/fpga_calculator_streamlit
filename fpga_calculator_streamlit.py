@@ -127,6 +127,7 @@ st.markdown(
 		<meta name="description" content="An online arbitrary-precision calculator for FPGA engineers. Supports IEEE 754 floating-point, signed two's complement binary, and custom fixed-point binary math.">
 		<meta name="keywords" content="FPGA calculator, programmer's calculator, IEEE 754 converter, two's complement calculator, fixed point binary point">
 		<meta name="author" content="bldillahunt">
+		<meta name="google-site-verification" content="KzMFcuPY8jwiiXD1InovPL5-8Cda2PVkQU0EUyXgLJA">
 
 		<!-- Open Graph tags to look good when linked on Reddit, Discord, or GitHub -->
 		<meta property="og:title" content="FPGA & Programmer's Calculator (Desktop Version)">
